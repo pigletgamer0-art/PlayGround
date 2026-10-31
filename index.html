@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#050b13" />
+    <meta name="description" content="Rocket Clash — a 3D 1v1 car-soccer arena. Beat the bot, first to 3 goals." />
+    <title>Rocket Clash — 1v1 Rocket Arena</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050b13'/%3E%3Cpath d='M10 40 26 16h10L20 40z' fill='%233b82ff'/%3E%3Cpath d='M30 48 46 24h8L38 48z' fill='%23ff4636'/%3E%3C/svg%3E" />
+    <link rel="preload" href="assets/fonts/barlow-800.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/chakra-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js",
+          "three/addons/": "./vendor/addons/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game" aria-label="Rocket Clash 3D arena"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+
+      <!-- ============ HUD ============ -->
+      <div id="hud" class="hud hidden" aria-live="polite">
+        <div class="hud-top">
+          <div class="scoreboard">
+            <div class="team-panel blue">
+              <div class="team-meta"><span class="team-swatch"></span><span class="team-label">YOU</span></div>
+              <span class="score" id="blueScore">0</span>
+              <div class="pips" id="bluePips"><i></i><i></i><i></i></div>
+            </div>
+            <div class="match-center">
+              <span class="match-mode">1 V 1</span>
+              <span class="match-target">FIRST TO 3</span>
+            </div>
+            <div class="team-panel red">
+              <div class="team-meta"><span class="team-label">BOT</span><span class="team-swatch"></span></div>
+              <span class="score" id="redScore">0</span>
+              <div class="pips" id="redPips"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="hud-actions">
+            <button class="chip" id="ballCamBtn" type="button" aria-label="Toggle ball camera">BALL CAM <b id="ballCamState">ON</b></button>
+            <button class="icon-btn" id="muteBtn" type="button" aria-label="Mute audio">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <span class="slash" aria-hidden="true"></span>
+            </button>
+            <button class="icon-btn" id="pauseBtn" type="button" aria-label="Pause game">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="countdown" class="countdown hidden">
+          <div class="countdown-disc"><span id="countdownNum">3</span></div>
+          <small id="countdownLabel">KICKOFF</small>
+        </div>
+
+        <div id="goalBanner" class="goal-banner hidden">
+          <span class="goal-kicker">GOAL</span>
+          <div class="goal-line"><span id="goalTeam">BLUE</span> <strong>SCORES</strong></div>
+          <em id="goalDetail">2 — 0</em>
+        </div>
+
+        <div class="hud-bottom">
+          <div class="speedo">
+            <span class="speed-value" id="speedVal">0</span>
+            <span class="speed-unit">KM/H</span>
+            <div class="speed-bar"><i id="speedFill"></i></div>
+          </div>
+
+          <div class="radar-wrap">
+            <div class="radar-label"><span>RADAR</span><b id="camBadge">BALL CAM</b></div>
+            <canvas id="minimapCanvas" width="220" height="148"></canvas>
+          </div>
+
+          <div class="boost-wrap">
+            <div class="boost-ring" id="boostRing">
+              <div class="boost-inner">
+                <span id="boostVal">34</span>
+                <small>BOOST</small>
+              </div>
+            </div>
+            <div class="boost-hint"><kbd>SHIFT</kbd> BOOST</div>
+          </div>
+        </div>
+
+        <div id="toast" class="toast" role="status"></div>
+        <div id="hintBar" class="hint-bar">
+          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> DRIVE</span>
+          <span><kbd>SPACE</kbd> JUMP / FLIP</span>
+          <span><kbd>SHIFT</kbd> BOOST</span>
+          <span><kbd>C</kbd> CAMERA</span>
+          <span><kbd>ESC</kbd> PAUSE</span>
+        </div>
+      </div>
+
+      <!-- ============ START MENU ============ -->
+      <section id="menu" class="screen menu">
+        <div class="menu-shade" aria-hidden="true"></div>
+        <div class="menu-content">
+          <div class="eyebrow"><span class="live-dot"></span> OMG ARENA // EXHIBITION MATCH</div>
+          <h1 class="logo">
+            <span class="logo-rocket">ROCKET</span><span class="logo-clash">CLASH</span>
+          </h1>
+          <p class="tagline">ONE CAR. ONE BOT. <b>FIRST TO 3</b> TAKES THE ARENA.</p>
+
+          <div class="match-card">
+            <div class="fighter blue">
+              <div class="fighter-icon">
+                <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 29h34l8-7 4 1-2 5H8z" fill="currentColor"/><path d="M15 20h20l6 6H12z" fill="currentColor" opacity=".62"/><circle cx="17" cy="30" r="6" fill="#0a1420" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="30" r="6" fill="#0a1420" stroke="currentColor" stroke-width="2"/></svg>
+              </div>
+              <div class="fighter-text"><b>YOU</b><span>BLUE OCTANE</span></div>
+            </div>
+            <div class="versus">VS</div>
+            <div class="fighter red">
+              <div class="fighter-text right"><b>THE BOT</b><span id="botSubtitle">PRO DRIVER</span></div>
+              <div class="fighter-icon">
+                <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 29h34l8-7 4 1-2 5H8z" fill="currentColor"/><path d="M15 20h20l6 6H12z" fill="currentColor" opacity=".62"/><circle cx="17" cy="30" r="6" fill="#0a1420" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="30" r="6" fill="#0a1420" stroke="currentColor" stroke-width="2"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="difficulty-block">
+            <div class="block-label">BOT DIFFICULTY</div>
+            <div class="difficulty-row" role="group" aria-label="Bot difficulty">
+              <button type="button" class="diff" data-difficulty="rookie">ROOKIE</button>
+              <button type="button" class="diff active" data-difficulty="pro">PRO</button>
+              <button type="button" class="diff" data-difficulty="allstar">ALL-STAR</button>
+            </div>
+            <div class="difficulty-bars">
+              <span>REFLEX</span>
+              <div class="bars" id="reflexBars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+              <span>AIM</span>
+              <div class="bars" id="aimBars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+            </div>
+          </div>
+
+          <button id="playBtn" class="play-btn" type="button" aria-label="Play">
+            <span class="play-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+            <span>Play</span>
+            <small>ENTER ARENA</small>
+          </button>
+
+          <div class="controls-grid keyboard-controls">
+            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>DRIVE</span></div>
+            <div><kbd>SPACE</kbd><span>JUMP / FLIP</span></div>
+            <div><kbd>SHIFT</kbd><span>BOOST</span></div>
+            <div><kbd>C</kbd><span>BALL CAM</span></div>
+          </div>
+          <div class="controls-grid touch-hints hidden">
+            <div><kbd>STICK</kbd><span>DRIVE</span></div>
+            <div><kbd>TAP</kbd><span>JUMP / FLIP</span></div>
+            <div><kbd>HOLD</kbd><span>BOOST</span></div>
+            <div><kbd>CAM</kbd><span>BALL CAM</span></div>
+          </div>
+
+          <div class="menu-foot">
+            <span>3D • REAL-TIME PHYSICS • TOUCH READY</span>
+            <button id="soundBtn" class="sound-btn" type="button" aria-label="Toggle sound"><span class="sound-dot"></span> SOUND ON</button>
+          </div>
+        </div>
+        <div class="menu-side" aria-hidden="true">
+          <div class="side-stat"><b>3</b><span>GOALS TO WIN</span></div>
+          <div class="side-stat"><b>100</b><span>MAX BOOST</span></div>
+          <div class="side-stat"><b>1</b><span>RIVAL</span></div>
+        </div>
+      </section>
+
+      <!-- ============ RESULT ============ -->
+      <section id="result" class="screen overlay hidden">
+        <div class="result-card">
+          <div id="resultKicker" class="result-kicker">MATCH COMPLETE</div>
+          <h2 id="resultTitle">VICTORY</h2>
+          <div class="final-score"><span class="blue" id="finalBlue">3</span><i>—</i><span class="red" id="finalRed">0</span></div>
+          <div class="result-stats">
+            <div><b id="statGoals">3</b><span>GOALS</span></div>
+            <div><b id="statHits">0</b><span>BALL HITS</span></div>
+            <div><b id="statSpeed">0</b><span>TOP KM/H</span></div>
+            <div><b id="statSaves">0</b><span>SAVES</span></div>
+          </div>
+          <div class="result-actions">
+            <button id="rematchBtn" type="button" class="primary">REMATCH</button>
+            <button id="menuBtn" type="button" class="ghost">MAIN MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAUSE ============ -->
+      <section id="pause" class="screen overlay hidden">
+        <div class="pause-card">
+          <div class="result-kicker">MATCH PAUSED</div>
+          <h2>TAKE A BREATH</h2>
+          <div class="pause-actions">
+            <button id="resumeBtn" type="button" class="primary">RESUME</button>
+            <button id="restartBtn" type="button" class="ghost">RESTART MATCH</button>
+            <button id="quitBtn" type="button" class="ghost">QUIT TO MENU</button>
+          </div>
+          <p class="pause-tip">TIP: YOUR SECOND JUMP IS A FLIP — USE IT TO HIT THE BALL HARDER.</p>
+        </div>
+      </section>
+
+      <!-- ============ TOUCH CONTROLS ============ -->
+      <div id="touchControls" class="touch-controls hidden" aria-hidden="true">
+        <div class="stick-zone" id="stickZone">
+          <div class="stick-base" id="stickBase">
+            <div class="stick-knob" id="stickKnob"></div>
+            <span class="stick-label">DRIVE</span>
+          </div>
+        </div>
+        <div class="touch-actions">
+          <button id="touchBoost" class="touch-btn boost" type="button">BOOST</button>
+          <button id="touchJump" class="touch-btn jump" type="button">JUMP</button>
+        </div>
+        <button id="touchCam" class="touch-chip" type="button">CAM</button>
+      </div>
+
+      <div id="rotateHint" class="rotate-hint hidden">ROTATE FOR FULL VIEW</div>
+
+      <div id="loading" class="loading">
+        <div class="loading-mark"><i></i><i></i><i></i></div>
+        <span>CALIBRATING ARENA</span>
+      </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
