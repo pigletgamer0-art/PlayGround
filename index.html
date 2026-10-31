@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#04060d" />
+  <meta name="description" content="Rocket Duel — a fast 3D 1v1 car-soccer arena. First to 3 goals beats NOVA." />
+  <title>Rocket Duel — 1v1 Arena</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preload" href="./assets/fonts/chakra-700.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./assets/fonts/rajdhani-600.woff2" as="font" type="font/woff2" crossorigin />
+</head>
+<body>
+  <main id="app">
+    <canvas id="scene" aria-label="Rocket Duel 3D arena"></canvas>
+    <div id="vignette" aria-hidden="true"></div>
+    <div id="scanlines" aria-hidden="true"></div>
+
+    <section id="hud" class="hidden" aria-label="Match HUD">
+      <header id="scoreboard">
+        <div class="team team-you">
+          <span class="team-tag">YOU</span>
+          <span class="score" id="score-you">0</span>
+        </div>
+        <div class="match-info">
+          <span class="clock" id="clock">00:00</span>
+          <span class="race">FIRST TO 3</span>
+        </div>
+        <div class="team team-bot">
+          <span class="score" id="score-bot">0</span>
+          <span class="team-tag">NOVA</span>
+        </div>
+        <div class="score-pips" aria-hidden="true">
+          <span class="pips pips-you" id="pips-you"><i></i><i></i><i></i></span>
+          <span class="pips pips-bot" id="pips-bot"><i></i><i></i><i></i></span>
+        </div>
+      </header>
+
+      <button id="pause-btn" aria-label="Pause match"><span></span><span></span></button>
+
+      <div id="boost-wrap" aria-label="Boost">
+        <div id="boost-dial">
+          <div id="boost-fill"></div>
+          <div id="boost-core">
+            <strong id="boost-value">100</strong>
+            <span>BOOST</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="speed-wrap" aria-label="Speed">
+        <strong id="speed-value">0</strong>
+        <span>KM/H</span>
+      </div>
+
+      <div id="boost-flag" aria-hidden="true">BOOST</div>
+
+      <div id="callout" aria-live="polite"></div>
+      <div id="countdown" aria-live="assertive"></div>
+
+      <div id="goal-banner" aria-hidden="true">
+        <span class="pre">GOAL!</span>
+        <span class="who">YOU SCORE</span>
+      </div>
+
+      <div id="hint">
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>drive</span>
+        <kbd>SPACE</kbd><span>jump</span>
+        <kbd>SHIFT</kbd><span>boost</span>
+      </div>
+    </section>
+
+    <section id="touch-controls" aria-label="Touch controls">
+      <div id="joystick" aria-label="Steering joystick">
+        <div id="joystick-ring"></div>
+        <div id="joystick-knob"></div>
+      </div>
+      <div class="touch-actions">
+        <button id="btn-boost" class="touch-btn btn-boost" aria-label="Boost">
+          <span class="touch-btn-icon">⏫</span><span class="touch-btn-label">BOOST</span>
+        </button>
+        <button id="btn-jump" class="touch-btn btn-jump" aria-label="Jump">
+          <span class="touch-btn-icon">⤒</span><span class="touch-btn-label">JUMP</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="menu" class="screen">
+      <div class="menu-glow" aria-hidden="true"></div>
+      <div class="menu-inner">
+        <div class="brand"><i></i>ROCKET DUEL<i></i></div>
+        <h1>1<span>V</span>1 ARENA</h1>
+        <p class="tagline">A neon car-soccer showdown. <strong>First to 3 goals</strong> takes the night.</p>
+
+        <div class="difficulty" role="radiogroup" aria-label="Bot difficulty">
+          <button class="diff" data-diff="rookie" role="radio" aria-checked="false">ROOKIE</button>
+          <button class="diff active" data-diff="pro" role="radio" aria-checked="true">PRO</button>
+          <button class="diff" data-diff="allstar" role="radio" aria-checked="false">ALL-STAR</button>
+        </div>
+
+        <button id="play-btn" class="primary-btn" aria-label="Play">
+          <span>PLAY</span>
+          <small>VS NOVA</small>
+        </button>
+
+        <div class="menu-controls">
+          <div class="control"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Drive</span></div>
+          <div class="control"><kbd>SPACE</kbd><span>Jump / double jump</span></div>
+          <div class="control"><kbd>SHIFT</kbd><span>Boost</span></div>
+          <div class="control"><kbd>X</kbd><span>Drift</span></div>
+          <div class="control"><kbd>ESC</kbd><span>Pause</span></div>
+        </div>
+        <p class="mobile-tip">Touch: left stick drives, right buttons jump &amp; boost. Rotate for the full arena view.</p>
+        <p class="tip">Best of the pitch — grab boost pads, bump NOVA, and bank shots off the walls.</p>
+      </div>
+    </section>
+
+    <section id="pause" class="screen modal hidden">
+      <div class="panel">
+        <p class="panel-kicker">MATCH PAUSED</p>
+        <h2>Take a breath</h2>
+        <div class="panel-actions">
+          <button id="resume-btn" class="primary-btn small"><span>RESUME</span></button>
+          <button id="restart-btn" class="ghost-btn">RESTART MATCH</button>
+          <button id="quit-btn" class="ghost-btn">QUIT TO MENU</button>
+        </div>
+        <div class="audio-row"><button id="mute-btn" class="ghost-btn tiny" aria-pressed="false">SOUND: ON</button></div>
+      </div>
+    </section>
+
+    <section id="result" class="screen modal hidden">
+      <div class="panel result-panel">
+        <p class="panel-kicker" id="result-kicker">MATCH COMPLETE</p>
+        <h2 id="result-title">VICTORY</h2>
+        <p class="result-score" id="result-score">3 — 1</p>
+        <div class="result-stats">
+          <div><strong id="stat-speed">0</strong><span>TOP KM/H</span></div>
+          <div><strong id="stat-hits">0</strong><span>BALL HITS</span></div>
+          <div><strong id="stat-time">0:00</strong><span>MATCH TIME</span></div>
+        </div>
+        <div class="panel-actions">
+          <button id="rematch-btn" class="primary-btn small"><span>REMATCH</span></button>
+          <button id="menu-btn" class="ghost-btn">CHANGE DIFFICULTY</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="rotate-hint" class="hidden">Rotate your device for a wider view</div>
+    <noscript><p class="noscript">Rocket Duel needs JavaScript and WebGL.</p></noscript>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
