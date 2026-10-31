@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#78cdf3" />
+    <meta name="description" content="Candy Craft: Ember Realm — a 3D voxel match-3 adventure with a fire companion and blocky bosses." />
+    <title>Candy Craft: Ember Realm</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23241733'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%23ff4d6d'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23ff9fb3'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <svg class="svg-defs" aria-hidden="true">
+      <defs>
+        <symbol id="i-flame" viewBox="0 0 16 16">
+          <path d="M8 0h2v2h2v2h1v2h1v6h-2v2H4v-2H2V8h1V6h2V4h2V0z" fill="#ff6b35"/>
+          <path d="M8 5h2v2h2v4h-1v2H7v-2H5V9h2V7h1V5z" fill="#ffd23f"/>
+          <path d="M8 9h1v2H7v-1h1V9z" fill="#fff6d6"/>
+        </symbol>
+        <symbol id="i-pick" viewBox="0 0 16 16">
+          <path d="M2 2h4v2H4v2H2V2zm8 0h4v4h-2V4h-2V2zM3 10h2v2h2v2H5v-2H3v-2zm8-8h2v2h2v2h-2V4h-2V2zM6 5h2v2H6V5zm2 2h2v2H8V7zm2 2h2v2h-2V9z" fill="#ffe6a1"/>
+          <path d="M7 7h2v2H7V7zm2 2h2v2H9V9z" fill="#a97845"/>
+        </symbol>
+        <symbol id="i-star" viewBox="0 0 16 16">
+          <path d="M7 1h2v4h2v2h4v2h-4v2h-2v4H7v-4H5V9H1V7h4V5h2V1z" fill="#ffd23f"/>
+          <path d="M7 5h2v2h2v2H9v2H7V9H5V7h2V5z" fill="#fff6d6"/>
+        </symbol>
+        <symbol id="i-sound" viewBox="0 0 16 16">
+          <path d="M2 6h3V4h2v8H5V8H2V6zm8-2h2v2h1v4h-1v2h-2v-2h1V6h-1V4zm-2 2h2v4H8V6z" fill="currentColor"/>
+        </symbol>
+        <symbol id="i-mute" viewBox="0 0 16 16">
+          <path d="M2 6h3V4h2v8H5V8H2V6zm7 0h2v2h2v2h-2v2H9v-2h2V8H9V6z" fill="currentColor"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div id="app">
+      <div class="sky-glow"></div>
+      <div class="sky-clouds" aria-hidden="true">
+        <span class="pixel-cloud cloud-a"></span>
+        <span class="pixel-cloud cloud-b"></span>
+        <span class="pixel-cloud cloud-c"></span>
+      </div>
+      <canvas id="stage" aria-label="3D candy match-three board"></canvas>
+      <div class="vignette"></div>
+      <div class="target-vignette" id="targetVignette"></div>
+      <div class="flash" id="flash"></div>
+
+      <div class="hud">
+        <header class="topbar">
+          <div class="brand">
+            <span class="brand-eyebrow">VOXEL MATCH-3 SAGA</span>
+            <div class="brand-title"><span class="candy-word">CANDY</span><span class="craft-word">CRAFT</span></div>
+            <div class="brand-sub"><svg class="icon"><use href="#i-flame"/></svg><span>EMBER REALM</span></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><span class="stat-label">SCORE</span><strong id="score">0</strong></div>
+            <div class="stat"><span class="stat-label">MOVES</span><strong id="moves">0</strong></div>
+          </div>
+
+          <section class="boss-card" id="bossCard" aria-label="Boss status">
+            <div class="boss-top">
+              <div class="boss-avatar" id="bossAvatar" aria-hidden="true">
+                <span class="boss-eye left"></span><span class="boss-eye right"></span><span class="boss-mouth"></span>
+              </div>
+              <div class="boss-meta">
+                <span class="boss-label">WILD BLOCK BEAST</span>
+                <strong id="bossName">COBBLE GOLEM</strong>
+              </div>
+              <span class="boss-lv" id="bossLv">LV.1</span>
+            </div>
+            <div class="hpbar"><div class="hpfill" id="bossHp"></div><span class="hptext" id="bossHpText">220 / 220</span></div>
+            <div class="boss-foot"><span id="bossType">ROCK TYPE</span><span class="weak">WEAK TO FIRE</span></div>
+          </section>
+        </header>
+
+        <div class="quest" id="quest"><svg class="icon"><use href="#i-flame"/></svg><span id="questText">SCORCH THE COBBLE GOLEM — MATCH 3+ CANDIES</span></div>
+        <div class="toast-layer" id="toastLayer" aria-live="polite"></div>
+        <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+
+        <div class="hint" id="hint"><span class="hint-key">TIP</span> TAP TWO NEIGHBOURING CANDIES TO SWAP</div>
+
+        <footer class="bottombar">
+          <section class="pup-card" id="pupCard" aria-label="Emberpup fire meter">
+            <div class="pup-head">
+              <span class="pup-name">EMBERPUP</span>
+              <button class="sound-toggle" id="soundBtn" type="button" aria-label="Toggle sound">
+                <svg class="icon"><use href="#i-sound"/></svg>
+              </button>
+              <span class="pup-pct" id="firePct">35%</span>
+            </div>
+            <div class="pup-meter"><div class="pup-fill" id="fireFill"></div><div class="pup-ticks"></div></div>
+            <div class="pup-note" id="fireNote">MATCH RUBY TO CHARGE THE FLAME</div>
+          </section>
+
+          <div class="hotbar-wrap">
+            <span class="hotbar-label">CRAFT BAG</span>
+            <div class="hotbar" aria-label="Craft bag">
+              <div class="slot selected" title="TNT — make a match of 4"><span class="slot-item tnt">TNT</span><span class="slot-count" id="countTnt">0</span><span class="slot-key">1</span></div>
+              <div class="slot" title="Ember core — make a match of 5"><span class="slot-item core"></span><span class="slot-count" id="countCore">0</span><span class="slot-key">2</span></div>
+              <div class="slot" title="Cobblestone mined from the board"><span class="slot-item stone"></span><span class="slot-count" id="countStone">0</span><span class="slot-key">3</span></div>
+              <div class="slot" title="Best combo this run"><span class="slot-item star"><svg class="icon"><use href="#i-star"/></svg></span><span class="slot-count" id="countCombo">0</span><span class="slot-key">4</span></div>
+              <div class="slot" title="Fire blasts unleashed"><span class="slot-item flame"><svg class="icon"><use href="#i-flame"/></svg></span><span class="slot-count" id="countBlast">0</span><span class="slot-key">5</span></div>
+            </div>
+          </div>
+
+          <button class="fire-btn" id="fireBtn" type="button" aria-label="Fire Blast">
+            <span class="fire-btn-icon"><svg class="icon"><use href="#i-flame"/></svg></span>
+            <span class="fire-btn-text"><strong id="fireBtnTitle">FIRE BLAST</strong><small id="fireBtnHint">CHARGING 35%</small></span>
+          </button>
+        </footer>
+      </div>
+
+      <div class="levelup" id="levelup" aria-live="assertive">
+        <span class="levelup-kicker" id="levelupKicker">BOULDER CRUSHED</span>
+        <strong id="levelupTitle">GOLEM DEFEATED!</strong>
+        <span class="levelup-sub" id="levelupSub">A NEW BEAST APPROACHES</span>
+      </div>
+
+      <div class="start-screen" id="startScreen">
+        <div class="start-card">
+          <span class="start-badge">A VOXEL MATCH-3 SAGA</span>
+          <h1><span class="candy-word">CANDY</span><span class="craft-word">CRAFT</span></h1>
+          <div class="start-sub"><span>EMBER REALM</span></div>
+          <p>Swap candy blocks. Mine the golem. Feed the flame.</p>
+          <div class="chips"><span>3D MATCH-3</span><span>FIRE COMPANION</span><span>VOXEL BOSSES</span></div>
+          <button class="play-btn" id="startBtn" type="button">Play</button>
+          <div class="start-controls">TAP TO SWAP <b>•</b> MATCH 3+ <b>•</b> UNLEASH FIRE</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
