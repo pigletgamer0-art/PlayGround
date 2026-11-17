@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Marvel: Origins</title>
+<style>
+:root{--cyan:#78dfff;--gold:#ffd45c;--ink:#071016;--panel:rgba(7,18,25,.88)}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#02060b;font-family:Inter,system-ui,sans-serif;color:#eefaff}
+canvas{display:block}.screen{position:absolute;inset:0}.hidden{display:none!important}
+#game{width:100%;height:100%}
+#topbar{position:absolute;z-index:5;left:18px;right:18px;top:14px;height:50px;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
+.brand{font-weight:900;letter-spacing:.16em;font-size:13px;text-shadow:0 2px 12px #000}.brand b{display:block;font-size:22px;letter-spacing:.08em;color:#fff}.brand small{color:#78dfff}
+.hud{display:flex;gap:8px;pointer-events:auto}.pill{height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid rgba(120,223,255,.24);background:rgba(5,16,23,.82);backdrop-filter:blur(12px);border-radius:8px;font-size:12px}.dot{width:7px;height:7px;border-radius:50%;background:#78dfff;box-shadow:0 0 12px #78dfff}.level{color:var(--gold)}
+#sidePanel{position:absolute;z-index:6;left:18px;top:82px;width:224px;background:var(--panel);border:1px solid rgba(120,223,255,.15);border-radius:10px;padding:14px;transform:translateX(-250px);transition:.35s}.panelOpen{transform:translateX(0)!important}.kicker{color:#78dfff;font-size:9px;font-weight:800;letter-spacing:.18em}.mission h3{font-size:14px;margin:7px 0}.mission p{font-size:11px;line-height:1.5;color:#afbbc1}.bar{height:3px;background:#1b2a31;border-radius:4px;overflow:hidden}.bar i{display:block;width:38%;height:100%;background:#78dfff}
+#log{position:absolute;z-index:5;left:18px;bottom:18px;width:min(360px,calc(100% - 36px));padding:10px 12px;border-left:2px solid #78dfff;background:linear-gradient(90deg,rgba(4,14,20,.9),transparent);font-size:12px;color:#c5d2d7}
+#actionTip{position:absolute;z-index:7;right:18px;bottom:22px;padding:9px 12px;border-radius:7px;border:1px solid rgba(255,212,92,.3);background:rgba(8,17,20,.9);font-size:11px;opacity:0;transition:.2s}.visible{opacity:1!important}
+#controls{position:absolute;z-index:8;right:14px;top:72px;display:flex;flex-direction:column;gap:8px}.iconBtn{width:42px;height:42px;border:1px solid rgba(120,223,255,.18);border-radius:8px;background:rgba(5,16,23,.86);color:#dff8ff;font-weight:bold;cursor:pointer}
+#planetUI{position:absolute;z-index:4;left:0;right:0;bottom:46px;text-align:center;pointer-events:none}.locationName{font-size:36px;font-weight:900;letter-spacing:.02em;text-shadow:0 4px 20px #000}.locationMeta{font-size:11px;color:#9bb1b9;letter-spacing:.18em;margin-top:5px}.enterBtn{pointer-events:auto;margin:14px auto 0;width:190px;height:46px;border:1px solid #78dfff;border-radius:6px;background:rgba(7,24,32,.82);color:white;font-weight:800;letter-spacing:.12em;cursor:pointer;box-shadow:0 0 30px rgba(78,199,255,.12)}
+#city{background:#10171b}#dialogue{position:absolute;z-index:10;left:50%;bottom:38px;transform:translateX(-50%);width:min(620px,calc(100% - 32px));background:rgba(5,12,16,.96);border:1px solid rgba(120,223,255,.35);border-radius:10px;padding:16px 18px 14px;box-shadow:0 12px 40px #000}.speaker{color:#78dfff;font-size:10px;font-weight:900;letter-spacing:.15em}.dialogueText{font-size:14px;line-height:1.5;margin:8px 0 12px}.choices{display:flex;gap:8px;flex-wrap:wrap}.choice{border:1px solid #314b55;background:#102029;color:white;border-radius:5px;padding:8px 10px;font-size:11px;cursor:pointer}.choice:hover{border-color:#78dfff}
+#joystick{position:absolute;z-index:9;left:18px;bottom:72px;width:92px;height:92px;border-radius:50%;border:1px solid rgba(180,220,230,.18);background:rgba(6,18,24,.35);display:none}.stick{position:absolute;width:42px;height:42px;left:25px;top:25px;border-radius:50%;background:rgba(120,223,255,.28);border:1px solid rgba(120,223,255,.55)}
+@media(max-width:760px){.hud .pill:first-child{display:none}.brand b{font-size:17px}.brand small{font-size:9px}#planetUI{bottom:28px}.locationName{font-size:27px}#sidePanel{left:10px;top:70px}#log{bottom:10px}#joystick{display:block}#actionTip{display:none}.locationMeta{font-size:9px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="planetUI"><div class="locationName">NUEVA YORK</div><div class="locationMeta">ESTADOS UNIDOS · TIERRA · SECTOR 616</div><button class="enterBtn" id="enter">DESCENDER A NUEVA YORK</button></div>
+<div id="topbar"><div class="brand"><small>MARVEL</small><b>ORIGINS</b></div><div class="hud"><div class="pill"><span class="dot"></span><span id="clock">18:42</span></div><div class="pill level">NV. 1 <span style="color:#9bb1b9">•</span> <span id="credits">$240</span></div></div></div>
+<div id="controls"><button class="iconBtn" id="menuBtn">☰</button><button class="iconBtn" id="zoomOut">−</button><button class="iconBtn" id="zoomIn">+</button></div>
+<div id="sidePanel"><div class="kicker">MISIÓN ACTIVA</div><div class="mission"><h3>Un extraño en Queens</h3><p>Encuentra a Peter Parker cerca del centro comunitario.</p><div class="bar"><i id="missionBar"></i></div></div><div class="kicker" style="margin-top:18px">UBICACIÓN</div><div style="font-size:12px;margin-top:7px" id="locText">Queens, Nueva York</div></div>
+<div id="log">Señal de emergencia detectada en Queens.</div><div id="actionTip">E · Hablar</div>
+<div id="joystick"><div class="stick" id="stick"></div></div>
+<div id="dialogue" class="hidden"><div class="speaker" id="speaker">PETER PARKER</div><div class="dialogueText" id="dialogueText"></div><div class="choices" id="choices"></div></div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
+let mode='planet',cityTime=18.7,rotation=0,zoom=1,drag=false,lastX=0,keys={},pointer={x:0,y:0,active:false};
+const world={x:0,y:0},player={x:360,y:430,dir:1,step:0,level:1,credits:240,mission:false};
+const save=JSON.parse(localStorage.getItem('marvelOrigins')||'{}');Object.assign(player,save.player||{});
+function saveGame(){localStorage.setItem('marvelOrigins',JSON.stringify({player}))}
+function stars(n){let a=[];for(let i=0;i<n;i++)a.push([Math.random(),Math.random(),Math.random()]);return a}const starsA=stars(180);
+function drawPlanet(){ctx.fillStyle='#02070c';ctx.fillRect(0,0,W,H);for(const s of starsA){ctx.globalAlpha=.25+s[2]*.7;ctx.fillStyle='#c8edff';ctx.fillRect(s[0]*W,s[1]*H,s[2]*1.5+.3,s[2]*1.5+.3)}ctx.globalAlpha=1;
+ const cx=W*.5,cy=H*.44,r=Math.min(W*.28,H*.34)*zoom;
+ ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+ const g=ctx.createRadialGradient(cx-r*.35,cy-r*.38,r*.05,cx,cy,r);g.addColorStop(0,'#a5e7ee');g.addColorStop(.25,'#2c9bb1');g.addColorStop(.62,'#0b5571');g.addColorStop(1,'#06131d');ctx.fillStyle=g;ctx.fillRect(cx-r,cy-r,r*2,r*2);
+ ctx.translate(cx,cy);ctx.rotate(rotation);ctx.globalAlpha=.95;ctx.fillStyle='#8fb49a';
+ // stylized continents
+ ctx.beginPath();ctx.moveTo(-r*.7,-r*.45);ctx.bezierCurveTo(-r*.45,-r*.72,-r*.22,-r*.55,-r*.28,-r*.25);ctx.bezierCurveTo(-r*.38,-r*.05,-r*.55,-r*.02,-r*.48,r*.22);ctx.bezierCurveTo(-r*.3,r*.28,-r*.12,r*.05,-r*.22,-r*.18);ctx.bezierCurveTo(-r*.05,-r*.35,-r*.15,-r*.55,-r*.7,-r*.45);ctx.fill();
+ ctx.beginPath();ctx.moveTo(r*.08,-r*.5);ctx.bezierCurveTo(r*.32,-r*.65,r*.68,-r*.5,r*.72,-r*.25);ctx.bezierCurveTo(r*.48,-r*.18,r*.5,r*.05,r*.36,r*.18);ctx.bezierCurveTo(r*.12,r*.05,r*.2,-r*.2,r*.08,-r*.5);ctx.fill();
+ ctx.fillStyle='rgba(225,255,255,.55)';ctx.beginPath();ctx.ellipse(-r*.05,-r*.56,r*.82,r*.11,-.12,0,Math.PI*2);ctx.fill();
+ ctx.restore();ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();ctx.globalCompositeOperation='screen';ctx.strokeStyle='rgba(220,250,255,.18)';ctx.lineWidth=1.2;for(let i=0;i<8;i++){ctx.beginPath();ctx.ellipse(cx,cy,r*(.8-i*.03),r*(.08+i*.025),-.25+i*.05,0,Math.PI*2);ctx.stroke()}ctx.restore();
+ ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.strokeStyle='rgba(135,211,233,.65)';ctx.lineWidth=2;ctx.stroke();
+ // atmospheric glow
+ const ag=ctx.createRadialGradient(cx-r*.1,cy-r*.15,r*.82,cx,cy,r*1.12);ag.addColorStop(0,'rgba(96,193,255,0)');ag.addColorStop(.9,'rgba(96,193,255,.05)');ag.addColorStop(1,'rgba(96,193,255,.45)');ctx.fillStyle=ag;ctx.beginPath();ctx.arc(cx,cy,r*1.12,0,Math.PI*2);ctx.fill();
+ // New York marker
+ ctx.fillStyle='#ffd45c';ctx.beginPath();ctx.arc(cx+r*.15,cy-r*.02,4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,212,92,.5)';ctx.beginPath();ctx.arc(cx+r*.15,cy-r*.02,10+Math.sin(performance.now()/300)*3,0,Math.PI*2);ctx.stroke();
+}
+const buildings=[];for(let x=0;x<840;x+=52){for(let y=0;y<640;y+=52){if((x>250&&x<330&&y<300)||(x>460&&x<600&&y>330&&y<430))continue;buildings.push({x,y:wH(y),c:(x+y)%3})}}function wH(y){return 30+((y*7)%18)}
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+function drawCity(){ctx.fillStyle='#20282b';ctx.fillRect(0,0,W,H);const sx=W/840,sy=H/640;
+ // asphalt grid
+ ctx.save();ctx.scale(sx,sy);ctx.fillStyle='#30383a';ctx.fillRect(0,0,840,640);
+ for(let x=0;x<840;x+=52){ctx.fillStyle='#87918d';ctx.fillRect(x,0,3,640);ctx.fillStyle='#adb7b0';ctx.fillRect(x+4,0,1,640)}
+ for(let y=0;y<640;y+=52){ctx.fillStyle='#87918d';ctx.fillRect(0,y,640,3);ctx.fillStyle='#adb7b0';ctx.fillRect(0,y+4,640,1)}
+ // buildings
+ for(const b of buildings){const h=b.wH||b.w||b.x;const bh=b.c?b.c:1;rect(b.x+8,b.y+8,36,36,['#415153','#3b4b50','#4b5755'][b.c]);rect(b.x+13,b.y+13,26,5,'#263638');ctx.fillStyle='#c6b66d';for(let wx=16;wx<38;wx+=10)for(let wy=22;wy<36;wy+=8){ctx.globalAlpha=(wx+wy+b.y)%3?0.8:.25;ctx.fillRect(b.x+wx,b.y+wy,5,4)}ctx.globalAlpha=1}
+ // park
+ rect(250,0,80,300,'#31563a');rect(260,15,60,270,'#3c6945');for(let i=0;i<12;i++){rect(268+(i*17)%52,22+(i*43)%250,10,10,'#1f4329');rect(271+(i*17)%52,25+(i*43)%250,4,6,'#7aa45c')}
+ // community center
+ rect(460,330,140,100,'#596d73');rect(470,340,120,80,'#71888b');rect(520,360,38,60,'#3a484b');rect(480,350,28,10,'#b9c3bd');rect(560,350,22,10,'#b9c3bd');
+ // people and props
+ for(let i=0;i<10;i++){let px=120+(i*83)%620,py=100+(i*137)%430;if((px>250&&px<330)||(px>460&&px<600&&py>330&&py<430))py+=70;drawNPC(px,py,i)}
+ // Peter
+ drawNPC(524,416,3,true);ctx.restore();
+ drawPlayer();
+ // vignette/light
+ const vg=ctx.createRadialGradient(W*.5,H*.48,100,W*.5,H*.48,Math.max(W,H)*.68);vg.addColorStop(.5,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.48)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+}
+function drawNPC(x,y,i,spider=false){x*=W/840;y*=H/640;ctx.save();ctx.scale(W/840,H/640);ctx.translate(x,y);ctx.fillStyle=spider?'#d52e35':'#c7a37b';ctx.fillRect(-5,-11,10,7);ctx.fillStyle=spider?'#1c2c73':['#7f9fa9','#5b7855','#b06c52','#435c7a'][i%4];ctx.fillRect(-7,-4,14,14);ctx.fillStyle='#262d2f';ctx.fillRect(-7,10,5,8);ctx.fillRect(2,10,5,8);ctx.restore()}
+function drawPlayer(){let x=player.x*(W/840),y=player.y*(H/640);ctx.save();ctx.translate(x,y);ctx.scale(W/840,H/640);ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,12,9,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#b8dbe1';ctx.fillRect(-6,-11,12,7);ctx.fillStyle='#263c68';ctx.fillRect(-8,-4,16,16);ctx.fillStyle='#b7cfd3';ctx.fillRect(-7,12,5,9);ctx.fillRect(2,12,5,9);ctx.fillStyle='#78dfff';ctx.fillRect(-3,-2,6,3);ctx.restore()}
+function updateCity(){let dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0),dy=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0);if(pointer.active){dx=pointer.dx;dy=pointer.dy}if(dx||dy){let len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;player.x+=dx*140*1/60;player.y+=dy*140*1/60;player.step+=.2}player.x=Math.max(20,Math.min(820,player.x));player.y=Math.max(20,Math.min(620,player.y));cityTime=(cityTime+.0008)%24;let h=Math.floor(cityTime),m=Math.floor((cityTime-h)*60);document.getElementById('clock').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');const dist=Math.hypot(player.x-524,player.y-416);document.getElementById('actionTip').classList.toggle('visible',dist<65)}
+function loop(){ctx.clearRect(0,0,W,H);if(mode==='planet'){drawPlanet();rotation+=.0008}else{updateCity();drawCity()}requestAnimationFrame(loop)}loop();
+canvas.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX});addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointermove',e=>{if(drag&&mode==='planet')rotation+=(e.clientX-lastX)*.004,lastX=e.clientX});canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.82,Math.min(1.35,zoom-e.deltaY*.0005))},{passive:false});
+addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E')interact()});addEventListener('keyup',e=>keys[e.key]=false);
+document.getElementById('enter').onclick=()=>enterCity();document.getElementById('zoomIn').onclick=()=>zoom=Math.min(1.35,zoom+.08);document.getElementById('zoomOut').onclick=()=>zoom=Math.max(.82,zoom-.08);document.getElementById('menuBtn').onclick=()=>document.getElementById('sidePanel').classList.toggle('panelOpen');
+function enterCity(){mode='city';document.getElementById('planetUI').classList.add('hidden');document.getElementById('sidePanel').classList.add('panelOpen');document.getElementById('log').textContent='Has llegado al barrio de Queens.'}
+function interact(){if(mode==='planet'){enterCity();return}const dist=Math.hypot(player.x-524,player.y-416);if(dist<65){showPeter()}else{document.getElementById('log').textContent='No hay nada cercano que interactúe.'}}
+function showPeter(){const d=document.getElementById('dialogue');d.classList.remove('hidden');document.getElementById('speaker').textContent='PETER PARKER';document.getElementById('dialogueText').textContent='Soy Peter. Los informes indican que algo extraño llegó al centro comunitario. ¿Vienes conmigo a investigar?';const c=document.getElementById('choices');c.innerHTML='';[['Investigar','mission'],['No por ahora','close']].forEach(([text,type])=>{let b=document.createElement('button');b.className='choice';b.textContent=text;b.onclick=()=>{d.classList.add('hidden');if(type==='mission'){player.mission=true;player.credits+=50;player.level=2;document.getElementById('credits').textContent='$'+player.credits;document.querySelector('.level').firstChild.textContent='NV. 2 ';document.getElementById('missionBar').style.width='72%';document.querySelector('.mission h3').textContent='Rastro anómalo';document.querySelector('.mission p').textContent='Investiga el centro comunitario antes del amanecer.';document.getElementById('log').textContent='Nueva misión: Rastro anómalo.';saveGame()}else document.getElementById('log').textContent='Peter vuelve a vigilar el distrito.'}});c.appendChild(b)})}
+// touch joystick
+const joy=document.getElementById('joystick'),stick=document.getElementById('stick');let joyId=null;joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(e.pointerId);pointer.active=true});joy.addEventListener('pointermove',e=>{if(e.pointerId!==joyId)return;let r=joy.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);let len=Math.hypot(x,y),max=28;if(len>max)x=x/len*max,y=y/len*max;stick.style.transform=`translate(${x}px,${y}px)`;pointer.dx=x/max;pointer.dy=y/max});function endJoy(){joyId=null;pointer.active=false;pointer.dx=pointer.dy=0;stick.style.transform=''}joy.addEventListener('pointerup',endJoy);joy.addEventListener('pointercancel',endJoy);
+})();
+</script>
+</body>
+</html>
