@@ -2,6 +2,7 @@
 /* UI, menus, mobile controls and the main loop */
 let menuOpen = false;
 let selectedOrigin = 'queens';
+let selectedPower = 'none';
 let miniTick = 0, autosave = 0;
 
 function applyOrigin(origin) {
@@ -14,7 +15,8 @@ function applyOrigin(origin) {
   state.medkits = 2 + (o.medkits || 0);
   state.credits = 250 + (o.credits || 0);
   state.armor = !!o.armor;
-  if (o.gloves) state.gloves = true;
+  state.gloves = !!o.gloves;
+  if (origin === 'citizen') state.credits = 300;
 }
 function resetNewGame() {
   state.level = 1; state.xp = 0;
@@ -24,6 +26,8 @@ function resetNewGame() {
   state.property = false; state.rent = 0; state.shards = 0;
   state.cityTime = 19.4; state.playtime = 0;
   state.weather = 'clear'; state.rainTimer = 55;
+  state.gloves = false; state.armor = false;
+  state.speed = 152; state.powerLevel = 1;
   player.x = 27.6 * TILE; player.y = 27.4 * TILE;
   cam.x = player.x; cam.y = player.y;
   enemies.length = 0; particles.length = 0;
@@ -37,10 +41,33 @@ $$('#origins .origin').forEach(btn => {
   });
 });
 
+$$('.creatorStep').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.creatorStep').forEach(b => b.classList.toggle('active', b === btn));
+    $$('.creatorPage').forEach(p => p.classList.toggle('active', p.dataset.page === btn.dataset.step));
+    sfx('ui');
+  });
+});
+
+$$('#powers .power').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#powers .power').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel'); selectedPower = btn.dataset.power;
+    sfx('ui');
+  });
+});
+
 $('#startBtn').addEventListener('click', () => {
   resetNewGame();
   state.name = ($('#heroName').value || 'Alex Ríos').trim().slice(0, 18) || 'Alex Ríos';
+  state.look = $('#heroLook').value;
+  state.color = $('#heroColor').value;
+  state.trait = $('#heroTrait').value;
+  state.moral = $('#heroMoral').value;
+  state.motivation = ($('#heroMotivation').value || '').trim().slice(0, 120);
+  state.power = selectedPower;
   applyOrigin(selectedOrigin);
+  if (state.power === 'speed') state.speed = 170;
   state.started = true; state.mode = 'planet';
   $('#startScreen').classList.add('hidden');
   $('#hud').classList.remove('hidden');
@@ -155,6 +182,9 @@ function statCards() {
     <div class="card"><h4>IDENTIDAD</h4><div class="bigNum">${state.name}</div>
       <p style="margin-top:6px">${o.label}</p><p class="small">${o.desc}</p>
       <div class="pillRow"><span class="pill">NIVEL ${state.level}</span><span class="pill">${o.bonus}</span></div>
+      <p class="small">Apariencia: ${state.look} · Personalidad: ${state.trait} · Moralidad: ${state.moral}</p>
+      <p class="small">Don: ${state.power === 'none' ? 'Sin poderes' : state.power} · Nivel ${state.powerLevel}</p>
+      <p class="small">Motivación: ${state.motivation || 'Por definir'}</p>
       <div class="barLg"><i style="width:${clamp(state.xp / xpNeed() * 100, 0, 100)}%"></i></div>
       <p class="small">${state.xp} / ${xpNeed()} XP para el siguiente nivel</p></div>
     <div class="card"><h4>ESTADO</h4>

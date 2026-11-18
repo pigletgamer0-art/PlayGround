@@ -19,13 +19,46 @@
       <div class="tagline">TU PERSONAJE · TUS DECISIONES · TU HISTORIA</div>
       <p class="hook">Queens nunca duerme. Entre azoteas y callejones, algo se mueve en la oscuridad.
         Crea tu identidad, elige de dónde vienes y decide qué clase de leyenda será escrita esta noche.</p>
-      <div class="fieldLabel">NOMBRE DEL PERSONAJE</div>
-      <input id="heroName" maxlength="18" value="Alex Ríos" autocomplete="off" spellcheck="false"/>
-      <div class="fieldLabel" style="margin-top:13px">ORIGEN</div>
-      <div class="origins" id="origins">
-        <button class="origin sel" data-origin="queens"><b>VIGILANTE DE QUEENS</b><small>Calle, puños y una deuda pendiente. +Salud, 2 botiquines.</small></button>
-        <button class="origin" data-origin="wakanda"><b>PRODIGIO DE WAKANDA</b><small>Tecnología vibranium. +Resistencia y equipo.</small></button>
-        <button class="origin" data-origin="shield"><b>AGENTE DE S.H.I.E.L.D.</b><small>Protocolos, contactos e inteligencia. +Créditos.</small></button>
+      <div class="creatorSteps">
+        <button class="creatorStep active" data-step="identity">1 · IDENTIDAD</button>
+        <button class="creatorStep" data-step="story">2 · HISTORIA</button>
+        <button class="creatorStep" data-step="powers">3 · PODERES</button>
+      </div>
+
+      <div class="creatorPage active" data-page="identity">
+        <div class="fieldLabel">NOMBRE DEL PERSONAJE</div>
+        <input id="heroName" maxlength="18" value="Alex Ríos" autocomplete="off" spellcheck="false"/>
+        <div class="creatorGrid two">
+          <div><div class="fieldLabel">APARIENCIA</div><select id="heroLook"><option value="urbano">Estilo urbano</option><option value="tecnico">Técnico</option><option value="clasico">Clásico</option><option value="sigiloso">Sigiloso</option></select></div>
+          <div><div class="fieldLabel">COLOR PRINCIPAL</div><select id="heroColor"><option value="#74e4ff">Cian</option><option value="#ff645e">Rojo</option><option value="#ffcf5c">Ámbar</option><option value="#7cf0b2">Esmeralda</option></select></div>
+        </div>
+      </div>
+
+      <div class="creatorPage" data-page="story">
+        <div class="fieldLabel">ORIGEN</div>
+        <div class="origins" id="origins">
+          <button class="origin sel" data-origin="queens"><b>VIGILANTE DE QUEENS</b><small>Un vecino decidido. Puños y una deuda pendiente.</small></button>
+          <button class="origin" data-origin="wakanda"><b>PRODIGIO DE WAKANDA</b><small>Tecnología vibranium y resistencia avanzada.</small></button>
+          <button class="origin" data-origin="shield"><b>AGENTE DE S.H.I.E.L.D.</b><small>Protocolos, contactos e información.</small></button>
+          <button class="origin" data-origin="citizen"><b>CIUDADANO SIN PODERES</b><small>Ningún don sobrenatural. Solo preparación y coraje.</small></button>
+        </div>
+        <div class="creatorGrid two">
+          <div><div class="fieldLabel">PERSONALIDAD</div><select id="heroTrait"><option value="protective">Protector</option><option value="curious">Curioso</option><option value="rebellious">Rebelde</option><option value="methodical">Metódico</option></select></div>
+          <div><div class="fieldLabel">MORALIDAD</div><select id="heroMoral"><option value="heroic">Heroica</option><option value="pragmatic">Pragmática</option><option value="vengeful">De venganza</option><option value="chaotic">Libertaria</option></select></div>
+        </div>
+        <div class="fieldLabel">MOTIVACIÓN</div>
+        <textarea id="heroMotivation" maxlength="120" rows="2" placeholder="¿Qué te obliga a levantarte cada mañana?">Proteger a los vecinos de Queens.</textarea>
+      </div>
+
+      <div class="creatorPage" data-page="powers">
+        <div class="fieldLabel">DON INICIAL</div>
+        <div class="powerGrid" id="powers">
+          <button class="power sel" data-power="none"><b>SIN PODERES</b><small>Solo habilidad humana y equipo.</small></button>
+          <button class="power" data-power="strength"><b>FUERZA</b><small>Golpes más potentes y resistentes.</small></button>
+          <button class="power" data-power="speed"><b>VELOCIDAD</b><small>Movimiento y esquiva superiores.</small></button>
+          <button class="power" data-power="energy"><b>ENERGÍA</b><small>Descargas de largo alcance progresivas.</small></button>
+        </div>
+        <p class="creatorHint">Los poderes pueden crecer en misiones, investigación y progresión de nivel.</p>
       </div>
       <button class="primaryBtn" id="startBtn">COMENZAR HISTORIA</button>
       <button class="ghostBtn hidden" id="continueBtn">CONTINUAR PARTIDA GUARDADA</button>

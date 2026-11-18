@@ -412,7 +412,7 @@ function updateCity(dt) {
     if (len > .08) {
       dx /= len; dy /= len;
       const sprint = (keys['shift'] || Math.hypot(joy.dx, joy.dy) > .88) && state.st > 2;
-      const spd = (state.speed + (state.armor ? 4 : 0)) * (sprint ? 1.5 : 1);
+      const spd = (effectiveSpeed() + (state.armor ? 4 : 0)) * (sprint ? 1.5 : 1);
       moveEntity(player, dx * spd * dt, dy * spd * dt, 9);
       player.moving = true;
       player.walk += dt * (sprint ? 13 : 9);

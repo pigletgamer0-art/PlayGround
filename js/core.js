@@ -29,17 +29,20 @@ resize();
 const ORIGINS = {
   queens: { label: 'VIGILANTE DE QUEENS', short: 'CALLEJERO', desc: 'Creciste entre azoteas y callejones. Tus puños son tu primer idioma.', bonus: 'Salud máxima +10 · 2 botiquines extra', hp: 10, medkits: 2, credits: 0 },
   wakanda: { label: 'PRODIGIO DE WAKANDA', short: 'TECNÓCRATA', desc: 'Formación en vibranium y bioingeniería. La tecnología responde a ti.', bonus: 'Resistencia máxima +25 · Traje reforzado', hp: 0, medkits: 0, credits: 0, st: 25, armor: true },
-  shield: { label: 'AGENTE DE S.H.I.E.L.D.', short: 'OPERATIVO', desc: 'Protocolos, expedientes y una red de contactos que nunca duerme.', bonus: 'Créditos +150 · Guantes de impacto', hp: 0, medkits: 1, credits: 150, gloves: true }
+  shield: { label: 'AGENTE DE S.H.I.E.L.D.', short: 'OPERATIVO', desc: 'Protocolos, expedientes y una red de contactos que nunca duerme.', bonus: 'Créditos +150 · Guantes de impacto', hp: 0, medkits: 1, credits: 150, gloves: true },
+  citizen: { label: 'CIUDADANO SIN PODERES', short: 'CIVIL', desc: 'No tienes dones sobrenaturales: solo preparación, experiencia y una decisión difícil.', bonus: '5 botiquines · Sin bonificaciones sobrenaturales', hp: 0, medkits: 5, credits: 50 }
 };
 
 const state = {
   started: false, mode: 'intro', name: 'Alex Ríos', origin: 'queens',
+  look: 'urbano', color: '#74e4ff', trait: 'protective', moral: 'heroic',
+  motivation: 'Proteger a los vecinos de Queens.', power: 'none', powerLevel: 1,
   level: 1, xp: 0, credits: 250,
   hp: 100, maxHp: 100, st: 100, maxSt: 100,
   medkits: 2, gloves: false, armor: false, property: false,
   quest: 0, questKills: 0, jessica: 0, jessicaClues: 0, luke: 0, lukeKills: 0,
   sound: true, playtime: 0, cityTime: 19.4, weather: 'clear', rainTimer: 55,
-  shards: 0, rent: 0
+  speed: 152, shards: 0, rent: 0
 };
 
 const player = {
@@ -54,7 +57,15 @@ let gameTime = 0;
 let lastFrame = performance.now();
 
 function xpNeed() { return 120 + (state.level - 1) * 80; }
-function attackDamage() { return 18 + (state.gloves ? 8 : 0) + Math.floor(state.level * 1.5); }
+function attackDamage() {
+  const powerBonus = state.power === 'strength' ? 8 * state.powerLevel : 0;
+  const energyBonus = state.power === 'energy' ? 4 * state.powerLevel : 0;
+  return 18 + powerBonus + energyBonus + (state.gloves ? 8 : 0) + Math.floor(state.level * 1.5);
+}
+function effectiveSpeed() {
+  const speedBonus = state.power === 'speed' ? 18 * state.powerLevel : 0;
+  return state.speed + speedBonus;
+}
 
 function notify(text, kind) {
   const box = $('#toasts'); if (!box) return;
@@ -101,13 +112,16 @@ function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       state: {
-        name: state.name, origin: state.origin, level: state.level, xp: state.xp,
+        name: state.name, origin: state.origin, look: state.look, color: state.color,
+        trait: state.trait, moral: state.moral, motivation: state.motivation,
+        power: state.power, powerLevel: state.powerLevel, level: state.level, xp: state.xp,
         credits: state.credits, hp: state.hp, maxHp: state.maxHp, st: state.st, maxSt: state.maxSt,
         medkits: state.medkits, gloves: state.gloves, armor: state.armor, property: state.property,
         quest: state.quest, questKills: state.questKills, jessica: state.jessica,
         jessicaClues: state.jessicaClues, luke: state.luke, lukeKills: state.lukeKills,
         sound: state.sound, playtime: state.playtime, cityTime: state.cityTime,
-        weather: state.weather, rainTimer: state.rainTimer, shards: state.shards, rent: state.rent
+        weather: state.weather, rainTimer: state.rainTimer, speed: state.speed,
+        shards: state.shards, rent: state.rent
       },
       player: { x: player.x, y: player.y }
     }));
